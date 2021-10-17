@@ -1,0 +1,56 @@
+version: '3'
+
+networks:
+  go-network:
+
+services:
+  docker-nginx:
+    image: nginx:1.21.3
+    ports:
+      - 80:80
+    tty: true
+    volumes:
+      - ../dev-environment-go/etc/nginx:/etc/nginx/conf.d
+      - nginx-log:/var/log/nginx
+    networks:
+      - go-network
+
+  docker-go:
+    image: golang:1.16
+    tty: true
+#    command: /bin/bash -c "go env -w GO111MODULE=on && go env -w GOPROXY=https://goproxy.cn,direct && bash"
+    ports:
+      - 8000:8000
+    networks:
+      - go-network
+
+  docker-redis:
+    image: redis:6.2.5
+    restart: always
+    tty: true
+    command: redis-server /etc/redis.conf
+    volumes:
+      - ../dev-environment-go/etc/redis.conf:/etc/redis.conf
+      - redis-data:/data
+    ports:
+      - 6379:6379
+    networks:
+      - go-network
+
+  docker-mysql:
+    image: mariadb:10.5.12
+    restart: always
+    tty: true
+    volumes:
+      - ../dev-environment-go/etc/my.cnf:/etc/my.cnf
+      - db-data:/var/lib/mysql
+    environment:
+      - "MYSQL_ALLOW_EMPTY_PASSWORD=yes"
+    ports:
+      - 3306:3306
+    networks:
+      - go-network
+volumes:
+  db-data:
+  redis-data:
+  nginx-log:
